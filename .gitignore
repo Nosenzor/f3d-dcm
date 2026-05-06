@@ -21,4 +21,6 @@ _wasm_build
 
 # testing related
 .cache
+/cmake-build-debug/
+/build-open3sdcm/
 /build-open3sdcm/
