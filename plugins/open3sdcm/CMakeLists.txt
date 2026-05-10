@@ -36,9 +36,12 @@ if(OPEN3SDCM_USE_LOCAL)
 else()
   # For CI/production, use FetchContent
   include(FetchContent)
+  # Pinned to Open3SDCM main@3f082e64f08fff4833e8fc857185c2cfee6cd302 for reproducible CI builds.
   FetchContent_Declare(
     Open3SDCM
     URL https://github.com/Nosenzor/Open3SDCM/archive/3f082e64f08fff4833e8fc857185c2cfee6cd302.tar.gz
+    # SHA256 generated with:
+    #   curl -L -s <url> | sha256sum
     URL_HASH SHA256=bb6b7f28b888b39569f8df5cb3477286264fc951a2a123ebe538e65f35e72955
     SOURCE_SUBDIR Lib
   )
