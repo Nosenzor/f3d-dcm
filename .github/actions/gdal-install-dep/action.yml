@@ -49,6 +49,11 @@ runs:
         key: gdal-${{inputs.version}}-${{ inputs.geotiff_version }}-${{inputs.proj_version}}-${{ inputs.sqlite_csb_version }}-${{inputs.tiff_version}}-${{inputs.zlib_version}}-${{runner.os}}-${{inputs.cpu}}-${{inputs.global_cache_index}}-5
 
     # Dependents: pdal vtk
+    - name: Enable long paths on Windows
+      if: runner.os == 'Windows' && steps.cache-gdal.outputs.cache-hit != 'true'
+      shell: powershell
+      run: git config --system core.longpaths true
+
     - name: Checkout gdal
       if: steps.cache-gdal.outputs.cache-hit != 'true'
       uses: actions/checkout@v6
