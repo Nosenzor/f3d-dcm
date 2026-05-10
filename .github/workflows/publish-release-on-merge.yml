@@ -20,7 +20,7 @@ jobs:
         with:
           script: |
             const mergeSha = context.payload.pull_request.merge_commit_sha;
-            const tag = `copilot-fix-build-errors-and-run-ci-${mergeSha.substring(0, 7)}`;
+            const tag = `auto-release-${mergeSha.substring(0, 7)}`;
             const { owner, repo } = context.repo;
 
             try {
@@ -70,8 +70,13 @@ jobs:
             } catch (error) {
               if (
                 error.status === 422 &&
-                typeof error.message === "string" &&
-                error.message.includes("already_exists")
+                (
+                  error.response?.data?.errors?.some(
+                    (apiError) => apiError?.code === "already_exists",
+                  ) ||
+                  (typeof error.message === "string" &&
+                    error.message.includes("already_exists"))
+                )
               ) {
                 core.info(`Release already exists for tag ${tag}`);
               } else {
