@@ -3,8 +3,9 @@ set(classes
   )
 
 # Add Open3SDCM include directory to the VTK module
-# Use absolute path since Open3SDCM_SOURCE_DIR may not be available in this scope
-include_directories(/Users/romainnosenzo/CLionProjects/Open3SDCM/Lib/src)
+if(DEFINED OPEN3SDCM_LIB_SOURCE_DIR)
+  include_directories(${OPEN3SDCM_LIB_SOURCE_DIR}/src)
+endif()
 
 vtk_module_add_module(f3d::vtkextOpen3SDCM
   NO_INSTALL
