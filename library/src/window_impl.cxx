@@ -453,6 +453,7 @@ void window_impl::UpdateDynamicOptions()
   renderer->ShowMinimalConsole(opt.ui.minimal_console);
   renderer->ShowDropZone(opt.ui.drop_zone.enable);
   renderer->ShowDropZoneLogo(opt.ui.drop_zone.show_logo);
+  renderer->SetBackdropColor(opt.ui.backdrop.color);
   renderer->SetBackdropOpacity(opt.ui.backdrop.opacity);
   renderer->ShowNotification(opt.ui.notifications.enable);
   renderer->ShowBindings(opt.ui.notifications.show_bindings);
@@ -590,7 +591,6 @@ void window_impl::UpdateDynamicOptions()
   renderer->SetAntiAliasingMode(aaMode);
   renderer->SetUseToneMappingPass(opt.render.effect.tone_mapping);
   renderer->SetDisplayDepth(opt.render.effect.display_depth);
-  renderer->SetDisplayDepthScalarColoring(opt.model.scivis.enable);
   renderer->SetBlendingMode(blendMode);
   renderer->SetBackfaceType(opt.render.backface_type);
   renderer->SetFinalShader(opt.render.effect.final_shader);

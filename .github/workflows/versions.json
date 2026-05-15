@@ -19,7 +19,7 @@
     "geotiff": "1.7.4",
     "imath": "v3.2.2",
     "java": "25",
-    "occt": "V7_9_3",
+    "occt": "V8_0_0",
     "openexr": "v3.4.4",
     "openvdb": "v13.0.0",
     "ospray": "v2.12.0",
@@ -27,7 +27,7 @@
     "proj": "9.8.0",
     "pybind11": "v3.0.1",
     "python": "3.14",
-    "sqlite_csb": "08be462f7fa9816f881dbb93eacb2e287f319208",
+    "sqlite_csb": "bb237f11ca039bd01314bb2252eb282086723c18",
     "tbb": "v2021.13.1",
     "tiff": "v4.7.1",
     "usd": "v25.11",
@@ -51,9 +51,9 @@
     "ospray": "v2.12.0",
     "pdal": "2.9.0",
     "proj": "9.0.0",
-    "pybind11": "v2.9.2",
+    "pybind11": "v3.0.0",
     "python": "3.10",
-    "sqlite_csb": "08be462f7fa9816f881dbb93eacb2e287f319208",
+    "sqlite_csb": "bb237f11ca039bd01314bb2252eb282086723c18",
     "tbb": "v2021.10.0",
     "tiff": "v4.2.0",
     "usd": "v24.08",
@@ -61,7 +61,7 @@
     "webp": "v1.2.4",
     "zlib": "v1.2.13"
   },
-  "vtk_commit_sha": "1c58a40fe829d968e24e29a91b3fe8e17e0ba14f",
-  "docker_timestamp": "20260504_0",
-  "global_cache_index": "1"
+  "vtk_commit_sha": "7e081f7b626d935b6217d044c42ff9bfec0958b3",
+  "docker_timestamp": "20260512_0",
+  "global_cache_index": "2"
 }
