@@ -1,0 +1,88 @@
+name: Superbuild Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  trigger-superbuild:
+    name: Trigger Superbuild
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trigger f3d-superbuild build workflow
+        uses: convictional/trigger-workflow-and-wait@v1.7.0
+        with:
+          owner: Nosenzor
+          repo: f3d-superbuild
+          github_token: ${{ secrets.F3D_SUPERBUILD_TOKEN }}
+          workflow_file_name: build.yml
+          ref: main
+          wait_interval: 60
+          client_payload: '{
+            "f3d_version": "${{ github.ref_name }}",
+            "sb_branch": "main"
+          }'
+          propagate_failure: true
+          trigger_workflow: true
+          wait_workflow: true
+
+  download-artifacts:
+    name: Download Artifacts
+    needs: trigger-superbuild
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Wait for artifacts to be ready
+        run: sleep 30
+
+      - name: Download all superbuild workflow artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          github-token: ${{ secrets.F3D_SUPERBUILD_TOKEN }}
+          repository: Nosenzor/f3d-superbuild
+          workflow: build.yml
+          workflow_conclusion: success
+          run_id: ${{ needs.trigger-superbuild.outputs.run_id }}
+
+      - name: List downloaded artifacts
+        run: find artifacts -type f | head -30
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: F3D-DCM ${{ github.ref_name }}
+          body: |
+            F3D-DCM (Fast and minimalist 3D viewer with DICOM/Open3SDCM support) release ${{ github.ref_name }}
+            
+            **Features:**
+            - Based on F3D ${{ github.ref_name }}
+            - Open3SDCM plugin for DICOM support
+            - HDF plugin for HDF5 file support
+            
+            **Assets:**
+            - Built automatically via f3d-superbuild
+            - macOS (ARM64)
+            - Windows (x64)
+            - Linux (x64)
+          files: |
+            artifacts/**/F3D-*
+            artifacts/**/*.dmg
+            artifacts/**/*.zip
+            artifacts/**/*.tar.*
+            artifacts/**/*.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
