@@ -10,174 +10,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Build and package for macOS
-  build-macos:
-    name: Build macOS
-    runs-on: macos-14
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-          lfs: false
-
-      - name: Install dependencies
-        run: |
-          brew update
-          brew install cmake ninja
-
-      - name: Configure
-        run: |
-          cmake -B build-release \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DF3D_MACOS_BUNDLE=ON \
-            -DF3D_PLUGIN_BUILD_OPEN3SDCM=ON \
-            -DF3D_PLUGIN_BUILD_HDF=ON \
-            -DF3D_MODULE_UI=ON \
-            -DF3D_MODULE_TINYFILEDIALOGS=ON \
-            -DF3D_MODULE_DMON=ON \
-            -G Ninja
-
-      - name: Build
-        run: cmake --build build-release -j$(sysctl -n hw.ncpu)
-
-      - name: Create macOS app bundle
-        run: |
-          # Copy binary and resources into app bundle
-          mkdir -p build-release/F3D-DCM.app/Contents/MacOS
-          mkdir -p build-release/F3D-DCM.app/Contents/Resources
-          mkdir -p build-release/F3D-DCM.app/Contents/Frameworks
-          cp build-release/bin/f3d.app/Contents/MacOS/f3d build-release/F3D-DCM.app/Contents/MacOS/
-          cp resources/logo.icns build-release/F3D-DCM.app/Contents/Resources/
-          cp build-release/bin/f3d.app/Contents/Info.plist build-release/F3D-DCM.app/Contents/
-          
-          # Copy libraries
-          cp build-release/lib/*.dylib build-release/F3D-DCM.app/Contents/Frameworks/ 2>/dev/null || true
-          
-          # Fix rpaths
-          install_name_tool -change @rpath/libf3d.3.dylib @executable_path/../Frameworks/libf3d.3.dylib build-release/F3D-DCM.app/Contents/MacOS/f3d 2>/dev/null || true
-
-      - name: Create DMG
-        run: |
-          mkdir -p dmg-content
-          cp -R build-release/F3D-DCM.app dmg-content/
-          hdiutil create -volname "F3D-DCM-${{ github.ref_name }}" \
-            -srcfolder dmg-content \
-            -ov -format UDBZ \
-            F3D-DCM-${{ github.ref_name }}-macOS.dmg
-
-      - name: Upload macOS DMG
-        uses: actions/upload-artifact@v4
-        with:
-          name: F3D-DCM-${{ github.ref_name }}-macOS.dmg
-          path: F3D-DCM-${{ github.ref_name }}-macOS.dmg
-          compression-level: 0
-
-  # Build for Windows
-  build-windows:
-    name: Build Windows
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-          lfs: false
-
-      - name: Install dependencies
-        run: |
-          choco install cmake ninja -y
-
-      - name: Configure
-        run: |
-          cmake -B build-release \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DF3D_WINDOWS_BUILD_SHELL_THUMBNAILS_EXTENSION=ON \
-            -DF3D_PLUGIN_BUILD_OPEN3SDCM=ON \
-            -DF3D_PLUGIN_BUILD_HDF=ON \
-            -DF3D_MODULE_UI=ON \
-            -DF3D_MODULE_TINYFILEDIALOGS=ON \
-            -DF3D_MODULE_DMON=ON \
-            -G Ninja
-
-      - name: Build
-        run: cmake --build build-release --config Release -j$(Get-CimInstance Win32_ComputerSystem | Select-Object -ExpandProperty NumberOfLogicalProcessors)
-
-      - name: Create Windows package
-        run: |
-          mkdir -p package
-          cp build-release/bin/Release/f3d.exe package/ 2>/dev/null || cp build-release/bin/f3d.exe package/ 2>/dev/null || true
-          cp build-release/bin/Release/*.dll package/ 2>/dev/null || true
-          cp build-release/lib/Release/*.dll package/ 2>/dev/null || true
-          Compress-Archive -Path package/* -DestinationPath F3D-DCM-${{ github.ref_name }}-Windows.zip
-
-      - name: Upload Windows ZIP
-        uses: actions/upload-artifact@v4
-        with:
-          name: F3D-DCM-${{ github.ref_name }}-Windows.zip
-          path: F3D-DCM-${{ github.ref_name }}-Windows.zip
-          compression-level: 0
-
-  # Build for Linux
-  build-linux:
-    name: Build Linux
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-          lfs: false
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libx11-dev libxt-dev libxrender-dev
-
-      - name: Configure
-        run: |
-          cmake -B build-release \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DF3D_PLUGIN_BUILD_OPEN3SDCM=ON \
-            -DF3D_PLUGIN_BUILD_HDF=ON \
-            -DF3D_MODULE_UI=ON \
-            -DF3D_MODULE_TINYFILEDIALOGS=ON \
-            -DF3D_MODULE_DMON=ON \
-            -G Ninja
-
-      - name: Build
-        run: cmake --build build-release -j$(nproc)
-
-      - name: Create Linux package
-        run: |
-          mkdir -p package/bin
-          cp build-release/bin/f3d package/bin/ 2>/dev/null || true
-          cp build-release/lib/*.so* package/bin/ 2>/dev/null || true
-          tar -czvf F3D-DCM-${{ github.ref_name }}-Linux.tar.gz package/
-
-      - name: Upload Linux tarball
-        uses: actions/upload-artifact@v4
-        with:
-          name: F3D-DCM-${{ github.ref_name }}-Linux.tar.gz
-          path: F3D-DCM-${{ github.ref_name }}-Linux.tar.gz
-          compression-level: 0
-
-  # Publish release with all assets
   publish-release:
     name: Publish Release
-    needs: [build-macos, build-windows, build-linux]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: List artifacts
-        run: ls -R artifacts/
 
       - name: Publish Release
         uses: softprops/action-gh-release@v2
@@ -187,15 +25,18 @@ jobs:
           body: |
             F3D-DCM (Fast and minimalist 3D viewer with DICOM/Open3SDCM support) release ${{ github.ref_name }}
             
-            **Changes:**
-            - See [CHANGELOG](https://github.com/Nosenzor/f3d-dcm/blob/${{ github.ref_name }}/doc/CHANGELOG.md)
+            **Features:**
+            - Based on F3D v3.5.0
+            - Open3SDCM plugin for DICOM support
+            - HDF plugin for HDF5 file support
             
-            **Assets:**
-            - macOS (ARM64) - Apple Silicon
-            - Windows (x64)
-            - Linux (x64)
+            **Build Instructions:**
+            See [CONTRIBUTING.md](https://github.com/Nosenzor/f3d-dcm/blob/${{ github.ref_name }}/CONTRIBUTING.md) for build instructions.
+            
+            **Pre-built Binaries:**
+            macOS binaries are available in the [releases](https://github.com/Nosenzor/f3d-dcm/releases) section.
           files: |
-            artifacts/*/*
+            # Upload any pre-built binaries from the repo
           draft: false
           prerelease: false
         env:
